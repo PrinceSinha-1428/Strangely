@@ -8,7 +8,7 @@ import { Sparkle } from 'lucide-react';
 const Navbar: FC = () => {
   return (
     <motion.div 
-      initial={{ y: -40, opacity: 0 }}
+      initial={{ y: -80, opacity: 0 }}
       animate={{y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
     className='fixed top-0 left-0 right-0 z-30 bg-black/50 backdrop-blur border-b border-white/10'>
