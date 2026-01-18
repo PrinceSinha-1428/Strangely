@@ -2,25 +2,44 @@ import http from 'http';
 import { Server } from 'socket.io';
 import { ENV } from './config/env';
 import logger from './config/winston';
+import {v4 as uuid } from "uuid";
 
 const httpServer = http.createServer();
 const port = ENV.PORT || 4000;
 
 const io = new Server(httpServer, { cors: { origin: "*" }});
+const waitingQueue: string[] = [];
+const assignedPair = new Map<string, string>()
 
 io.on("connection",(socket) => {
    logger.info(`Socket data ${socket.id}`);
-   socket.on("name", (data) => {
-      logger.info(`Socket emitted data ${data}`);
+
+   if(waitingQueue.includes(socket.id)) return;
+
+   socket.on("start", () => {
+      logger.info(`Socket connection`);
+      if(waitingQueue.length > 0){
+         //todo connect those users
+         const partner = waitingQueue.shift()!;
+         const roomId = uuid();
+         assignedPair.set(socket.id, partner);
+         assignedPair.set(partner, socket.id);
+         socket.emit("matched", roomId);
+         socket.to(partner).emit("matched", roomId);
+      } else {
+         waitingQueue.push(socket.id);
+      }
+
    })
 });
+
+
+
+
 
 httpServer.listen(port, () => {
    logger.info(`Server is runing is ${ENV.NODE_ENV} mode at http://localhost:${ENV.PORT}`);
 });
-
-
-
 
 const shutDownServer = () => {
    logger.info(`Shutting down server`);
