@@ -3,24 +3,21 @@
 import Footer from "@/components/Footer";
 import Main from "@/components/Main";
 import Navbar from "@/components/Navbar";
-import { useEffect } from "react";
-import { io } from "socket.io-client";
+import { useState } from "react";
 
-const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
-  transports: ["websocket"]
-});
+
+
 
 
 export default function Home() {
 
-  useEffect(() => {
-    socket.emit("name", "Prince")
-  },[]);
+  const [showNavbar, setShowNavbar] = useState<boolean>(false);
+
   
   return (
     <>
-      <Navbar/>
-      <Main/>
+      {showNavbar && <Navbar/>}
+      <Main setShowNavbar={setShowNavbar} />
       <Footer/>
     </>
   );

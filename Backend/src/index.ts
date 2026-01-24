@@ -9,7 +9,21 @@ const port = ENV.PORT || 4000;
 
 const io = new Server(httpServer, { cors: { origin: "*" }});
 const waitingQueue: string[] = [];
-const assignedPair = new Map<string, string>()
+const assignedPair = new Map<string, string>();
+
+const handleLeave = (id: string) => {
+   const index = waitingQueue.indexOf(id);
+   if(index !== -1){
+      waitingQueue.splice(index, 1);
+   }
+      const partner = assignedPair.get(id);
+      if(partner){
+         io.to(partner).emit("partner_left");
+         assignedPair.delete(id);
+         assignedPair.delete(partner);
+      }
+      
+}
 
 io.on("connection",(socket) => {
    logger.info(`Socket data ${socket.id}`);
@@ -19,7 +33,6 @@ io.on("connection",(socket) => {
    socket.on("start", () => {
       logger.info(`Socket connection`);
       if(waitingQueue.length > 0){
-         //todo connect those users
          const partner = waitingQueue.shift()!;
          const roomId = uuid();
          assignedPair.set(socket.id, partner);
@@ -28,9 +41,21 @@ io.on("connection",(socket) => {
          socket.to(partner).emit("matched", roomId);
       } else {
          waitingQueue.push(socket.id);
+         socket.emit("waiting")
       }
 
-   })
+   });
+
+   
+
+   socket.on("next", () => {
+      handleLeave(socket.id);
+   });
+
+   socket.on("disconnect", () => {
+      handleLeave(socket.id);
+   });
+
 });
 
 
